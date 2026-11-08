@@ -1,0 +1,33 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    env_file: .env.mongo
+    networks:
+      - airflow
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--host", "mongodb", "--eval", "db.adminCommand({ ping: 1 })"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    env_file: .env.mongo
+    environment:
+      ME_CONFIG_BASICAUTH: "true"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - airflow
+    ports:
+      - "127.0.0.1:8081:8081"
+
+  scheduler:
+    env_file: .env.mongo
+
+volumes:
+  mongo_data:
